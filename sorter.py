@@ -17,26 +17,20 @@ file_types = [
 
 
 class FileSorter:
-
     def __init__(self, download_path: str):
-        try:
+        if Path.exists(Path(download_path)):
             self.download_path = Path(download_path)
-        except Exception as e:
-            logging.error(f"Ошибка пути: {e}")
-            sys.exit(1)
-        if Path.exists(self.download_path):
-            self.download_path = download_path
         else:
             try:
                 self.download_path = Path.home() / "Downloads"
-                print("Путь определен автоматически")
+                logging.info("Путь определен автоматически")
             except FileNotFoundError:
+                logging.error(f"Ошибка пути")
                 sys.exit(1)
 
     def _scan_files(self) -> list:
         self.file_list = list()
         for i in Path(self.download_path).iterdir():
-
             if i.is_file():
                 self.file_list.append(i)
             # maybe later
@@ -64,7 +58,7 @@ class FileSorter:
         if dest.exists():
             n = 1
             while dest.exists():
-                dest = str(dest) + "_" + str(n)
+                dest = Path(str(self.download_path / category / file_path.stem) + "_" + str(n) + file_path.suffix)
                 n += 1
             try:
                 shutil.move(file_path, dest)
@@ -85,9 +79,7 @@ class FileSorter:
                 pass
 
     def organize(self):
-        category_set = set()
-        for i in self._scan_files():
-            category_set.add(self._get_category(i.suffix))
+        category_set = {self._get_category(i.suffix) for i in self._scan_files()}
         self._create_directories(category_set)
         for i in self._scan_files():
             self._move_file(i, self._get_category(i.suffix))
@@ -98,7 +90,7 @@ class FileSorter:
 
 if __name__ == "__main__":
     try:
-        sorter = FileSorter(input("Введите путь к папке загрузок: \n"))
+        sorter = FileSorter(str(input("Введите путь к папке загрузок: \n")))
     except KeyboardInterrupt:
         logging.info("Надо было что нибудь ввести -_-")
         sys.exit(1)
