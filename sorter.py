@@ -15,18 +15,25 @@ file_types = [
     {"Code": [".py", ".js", ".html", ".css", ".json", ".xml", ".csv"]},
 ]
 
-pin = False
-
 
 class FileSorter:
-    def __init__(self, download_path: str):
-        if Path(download_path).exists():
-            self.download_path = Path(download_path)
-        else:
-            self.download_path = Path.home() / "Downloads"
-            logging.info("Путь определен автоматически")
+    def __init__(self, download_path: str = None):
+        self.pin = False
+        if download_path:
+            if Path(download_path).exists():
+                self.download_path = Path(download_path)
+            else:
+                logging.error("Указанная папка не существует:")
+                sys.exit(1)
+        elif not download_path:
+            if (Path.home() / "Downloads").exists():
+                self.download_path = Path.home() / "Downloads"
+                logging.info("Папка определена автоматически")
+            else:
+                logging.error("Стандартная папка Downloads не найдена")
+                sys.exit(1)
 
-    def _scan_files(self) -> list:
+    def scan_files(self) -> list:
         file_list = list()
         for i in self.download_path.iterdir():
             if i.is_file():
@@ -40,18 +47,18 @@ class FileSorter:
             #             FileSorter._scan_files(k)
         return file_list
 
-    def _get_category(self, extension: str) -> str:
+    def get_category(self, extension: str) -> str:
         for pref_list in file_types:
             for c, extensions in pref_list.items():
                 if extension in extensions:
                     return c
-        return "Others"
+        return "Miscellaneous"
 
-    def _create_directories(self, categories: set):
+    def create_directories(self, categories: set):
         for category in categories:
             (self.download_path / category).mkdir(exist_ok=True)
 
-    def _move_file(self, file_path: Path, category: str):
+    def move_file(self, file_path: Path, category: str):
         dest = self.download_path / category / file_path.name
         if dest.exists():
             n = 1
@@ -59,29 +66,27 @@ class FileSorter:
                 dest = Path(f"{self.download_path / category / file_path.stem}_{n}{file_path.suffix}")
                 n += 1
         try:
+            self.dest = dest
             shutil.move(file_path, dest)
-            global pin
-            pin = True
+            self.pin = True
         except PermissionError:
             logging.warning(f"Доступ запрещен")
-            global pin
-            pin = False
+            self.pin = False
             pass
         except OSError:
             logging.error(f"Файл занят другим процессом")
-            global pin
-            pin = False
+            self.pin = False
             pass
 
     def organize(self):
-        for i in self._scan_files():
-            x = self._get_category(i.suffix.lower())
+        for i in self.scan_files():
+            x = self.get_category(i.suffix.lower())
             if not (self.download_path / x).exists():
-                self._create_directories({x})
-            self._move_file(i, x)
-            if pin:
+                self.create_directories({x})
+            self.move_file(i, x)
+            if self.pin:
                 logging.info(
-                    f"Перемещен: {i.name} -> {x}/{i.name}"
+                    f"Перемещен: {i.name} -> {x}/{self.dest.name}"
                 )
 
 
