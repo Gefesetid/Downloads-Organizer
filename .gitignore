@@ -1,10 +1,10 @@
-# Виртуальное окружение
+# Virtual Environment
 venv/
 .venv/
 env/
 env.bak/
 
-# Кэш и компилированные файлы Python 
+# Cache and compiled Python files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -14,7 +14,7 @@ dist/
 build/
 *.egg
 
-# Редакторы и IDE 
+# Editors and IDE 
 # PyCharm
 .idea/
 *.iml
@@ -22,16 +22,16 @@ build/
 *.sublime-project
 *.sublime-workspace
 
-# Секреты
+# Secrets
 .env
 *.env
 !*.env.example
 
-# Логи 
+# logs 
 *.log
 logs/
 
-# Файлы ос
+# OS files
 # macOS
 .DS_Store
 # Windows
